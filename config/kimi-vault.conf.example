@@ -1,0 +1,22 @@
+# Kimi Secrets Vault Configuration File
+# Copy this to ~/.config/kimi-vault/config and customize
+
+# Vault directory (where encrypted secrets are stored)
+# Default: ~/.kimi-vault
+# vault_dir = ~/.kimi-vault
+
+# Path to age private key
+# Default: ~/.kimi-vault/key.txt
+# key_file = ~/.kimi-vault/key.txt
+
+# Path to encrypted secrets file
+# Default: ~/.kimi-vault/secrets.json.age
+# secrets_file = ~/.kimi-vault/secrets.json.age
+
+# OAuth credentials for Gmail API (optional - can also use secrets.json)
+# Get these from Google Cloud Console: https://console.cloud.google.com/
+# client_id = YOUR_CLIENT_ID.apps.googleusercontent.com
+# client_secret = YOUR_CLIENT_SECRET
+
+# Redirect URI for OAuth flow (default: http://localhost:8080/oauth/callback)
+# redirect_uri = http://localhost:8080/oauth/callback

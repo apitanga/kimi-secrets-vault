@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kimi-secrets-vault"
+version = "1.0.0"
+description = "Secure, just-in-time access to API credentials with age encryption"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Andre Pitanga", email = "andre@pitanga.org"}
+]
+keywords = ["secrets", "encryption", "gmail", "api", "vault", "age"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Utilities",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "google-auth>=2.0.0",
+    "google-auth-oauthlib>=1.0.0",
+    "google-auth-httplib2>=0.1.0",
+    "google-api-python-client>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+kimi-vault = "kimi_vault.cli:main"
+kimi-vault-oauth = "bin.kimi-vault-oauth:main"
+
+[project.urls]
+Homepage = "https://github.com/apitanga/kimi-secrets-vault"
+Repository = "https://github.com/apitanga/kimi-secrets-vault"
+Documentation = "https://github.com/apitanga/kimi-secrets-vault/blob/main/README.md"
+Issues = "https://github.com/apitanga/kimi-secrets-vault/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+kimi_vault = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311', 'py312']
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
