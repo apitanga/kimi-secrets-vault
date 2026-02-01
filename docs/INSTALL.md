@@ -13,9 +13,20 @@
 brew install age
 ```
 
-### Linux (Ubuntu/Debian)
+### Linux
+
+**Ubuntu/Debian:**
 ```bash
-# Download latest release from https://github.com/FiloSottile/age/releases
+sudo apt install age
+```
+
+**Fedora:**
+```bash
+sudo dnf install age
+```
+
+**Other distros** - Download latest release:
+```bash
 # For example:
 wget https://github.com/FiloSottile/age/releases/download/v1.1.1/age-v1.1.1-linux-amd64.tar.gz
 tar -xzf age-v1.1.1-linux-amd64.tar.gz

@@ -21,7 +21,24 @@ A secure vault that stores your API credentials encrypted at rest, decrypts them
 
 ## Quick Start
 
-### 1. Install
+### 1. Install age (REQUIRED - System Dependency)
+
+**kimi-secrets-vault requires the `age` encryption tool.** Install it first:
+
+```bash
+# macOS
+brew install age
+
+# Ubuntu/Debian  
+sudo apt install age
+
+# Fedora
+sudo dnf install age
+
+# Or download from https://github.com/FiloSottile/age/releases
+```
+
+### 2. Install kimi-secrets-vault
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/kimi-secrets-vault.git
