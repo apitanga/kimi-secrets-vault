@@ -168,6 +168,47 @@ class GmailClient:
         except GmailAuthError:
             return []
     
+    def list_inbox(self, max_results: int = 10) -> List[Dict[str, Any]]:
+        """List emails in Inbox (has INBOX label)"""
+        try:
+            self._ensure_valid_token()
+            
+            results = self._execute_with_retry(
+                self.service.users().messages().list(
+                    userId='me', q='in:inbox', maxResults=max_results
+                ).execute
+            )
+            
+            if not results:
+                return []
+            
+            messages = results.get('messages', [])
+            emails = []
+            
+            for msg in messages:
+                msg_data = self._execute_with_retry(
+                    self.service.users().messages().get(
+                        userId='me', id=msg['id'],
+                        format='metadata',
+                        metadataHeaders=['Subject', 'From', 'Date']
+                    ).execute
+                )
+                
+                if msg_data:
+                    headers = {h['name']: h['value'] for h in msg_data['payload']['headers']}
+                    emails.append({
+                        'id': msg['id'],
+                        'subject': headers.get('Subject', 'No Subject'),
+                        'from': headers.get('From', 'Unknown'),
+                        'date': headers.get('Date', 'Unknown'),
+                        'snippet': msg_data.get('snippet', '')[:150]
+                    })
+            
+            return emails
+            
+        except GmailAuthError:
+            return []
+    
     def list_recent(self, max_results: int = 10) -> List[Dict[str, Any]]:
         """List most recent emails (read or unread)"""
         try:
