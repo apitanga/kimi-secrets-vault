@@ -7,11 +7,15 @@ Provides plugin-based command execution and vault management.
 import argparse
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
 from kimi_vault.core import Vault, VaultConfig, get_config, secure_delete
 from kimi_vault.core.plugin import PluginManager, PluginError
+
+# Version - sync with pyproject.toml
+__version__ = "1.0.0"
 
 
 def get_secrets_path() -> Path:
@@ -167,6 +171,54 @@ def cmd_run(args):
         sys.exit(1)
 
 
+def cmd_upgrade(args):
+    """Upgrade kimi-vault to latest version from GitHub"""
+    repo_url = "https://github.com/apitanga/kimi-secrets-vault.git"
+    
+    print(f"🔄 Upgrading kimi-vault...")
+    print(f"   Repository: {repo_url}")
+    if args.target_version:
+        print(f"   Target version: {args.target_version}")
+    else:
+        print(f"   Target: latest main branch")
+    print()
+    
+    # Construct pip install command
+    if args.target_version:
+        install_spec = f"git+{repo_url}@{args.target_version}"
+    else:
+        install_spec = f"git+{repo_url}"
+    
+    cmd = [sys.executable, "-m", "pip", "install", "--upgrade", install_spec]
+    
+    print(f"Running: pip install --upgrade {install_spec}")
+    print()
+    
+    try:
+        result = subprocess.run(cmd, capture_output=False, text=True)
+        if result.returncode == 0:
+            print()
+            print("✅ Upgrade complete!")
+            print()
+            # Show new version
+            print("New version:")
+            subprocess.run([sys.executable, "-m", "kimi_vault.cli.main", "--version"])
+        else:
+            print()
+            print(f"❌ Upgrade failed with exit code {result.returncode}")
+            sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error during upgrade: {e}")
+        sys.exit(1)
+
+
+def cmd_version():
+    """Show version information"""
+    print(f"kimi-vault {__version__}")
+    print(f"Python {sys.version.split()[0]}")
+    print(f"Location: {Path(__file__).parent.parent.parent}")
+
+
 def cmd_session(args):
     """Start a secure session with decrypted secrets"""
     import subprocess
@@ -270,8 +322,12 @@ Examples:
   %(prog)s gmail.unread                  # List unread emails
   %(prog)s gmail.search "from:boss"      # Search emails
   %(prog)s plugins list                  # List available plugins
+  %(prog)s upgrade                       # Upgrade to latest version
         """
     )
+    
+    # Add version flag
+    parser.add_argument("--version", "-v", action="store_true", help="Show version information")
     
     subparsers = parser.add_subparsers(dest="cmd", help="Commands")
     
@@ -301,10 +357,19 @@ Examples:
     session_parser.add_argument("--shell", action="store_true", help="Start shell instead of kimi")
     session_parser.add_argument("--exec", dest="command", nargs=argparse.REMAINDER, help="Execute command and exit")
     
+    # upgrade command
+    upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade to latest version from GitHub")
+    upgrade_parser.add_argument("--version", dest="target_version", help="Specific version to upgrade to (default: latest)")
+    
     # plugin command (direct invocation: kimi-vault gmail.unread)
     # This is handled specially below
     
     args, remaining = parser.parse_known_args()
+    
+    # Handle --version flag
+    if args.version:
+        cmd_version()
+        sys.exit(0)
     
     if not args.cmd:
         parser.print_help()
@@ -317,6 +382,7 @@ Examples:
         "decrypt": cmd_decrypt,
         "plugins": cmd_plugins,
         "session": cmd_session,
+        "upgrade": cmd_upgrade,
     }
     
     handler = handlers.get(args.cmd)

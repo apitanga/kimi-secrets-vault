@@ -1,250 +1,102 @@
 #!/bin/bash
-#
-# Kimi Secrets Vault - Installation Script
-#
-# Usage: ./install.sh [--dev]
-#
+# Install or upgrade kimi-secrets-vault from GitHub
+# Usage: curl -sSL https://raw.githubusercontent.com/apitanga/kimi-secrets-vault/main/install.sh | bash
 
-set -euo pipefail
+set -e
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+REPO_URL="https://github.com/apitanga/kimi-secrets-vault.git"
+VERSION="${1:-main}"  # Default to main branch, or specify version
 
-# Configuration
-INSTALL_MODE="${1:-user}"  # user, dev, or system
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VAULT_DIR="${HOME}/.kimi-vault"
-CONFIG_DIR="${HOME}/.config/kimi-vault"
-BIN_DIR="${HOME}/.local/bin"
-
-echo -e "${GREEN}🔐 Kimi Secrets Vault Installer${NC}"
-echo "================================="
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║       kimi-secrets-vault Installer/Upgrader                ║"
+echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
 # Check Python version
-echo -e "${BLUE}Checking Python version...${NC}"
+echo "Checking Python version..."
 if ! command -v python3 &> /dev/null; then
-    echo -e "${RED}Error: Python 3 is not installed${NC}"
+    echo "❌ Python 3 is required but not installed"
     exit 1
 fi
 
-PYTHON_VERSION=$(python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2)
-REQUIRED_VERSION="3.9"
+PYTHON_VERSION=$(python3 --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1,2)
+echo "   Found Python $PYTHON_VERSION"
 
-if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$PYTHON_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
-    echo -e "${RED}Error: Python $PYTHON_VERSION found, but Python $REQUIRED_VERSION+ required${NC}"
+# Check pip
+echo "Checking pip..."
+if ! command -v pip3 &> /dev/null && ! python3 -m pip --version &> /dev/null; then
+    echo "❌ pip is required but not installed"
+    echo "   Install with: python3 -m ensurepip --upgrade"
     exit 1
 fi
+echo "   ✓ pip available"
 
-echo -e "${GREEN}✅ Python $PYTHON_VERSION found${NC}"
-
-# Check age installation
-echo ""
-echo -e "${BLUE}Checking age installation...${NC}"
+# Check age (required dependency)
+echo "Checking age (encryption tool)..."
 if ! command -v age &> /dev/null; then
-    echo -e "${YELLOW}⚠️  age is not installed${NC}"
-    echo "age is required for encryption/decryption."
+    echo "   ⚠️  age not found. You'll need to install it:"
+    echo "       macOS: brew install age"
+    echo "       Ubuntu/Debian: sudo apt install age"
+    echo "       Other: https://age-encryption.org"
     echo ""
-    echo "Install it:"
-    echo "  macOS:    brew install age"
-    echo "  Linux:    See https://age-encryption.org"
-    echo ""
-    read -p "Continue anyway? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
-else
-    echo -e "${GREEN}✅ age $(age --version 2>&1) found${NC}"
 fi
 
-# Install Python package
+# Check if already installed
 echo ""
-echo -e "${BLUE}Installing Python package...${NC}"
-
-cd "$SCRIPT_DIR"
-
-if [ "$INSTALL_MODE" = "--dev" ] || [ "$INSTALL_MODE" = "dev" ]; then
-    echo "Installing in development mode..."
-    pip install -e ".[dev]" || pip3 install -e ".[dev]"
-else
-    echo "Installing for user..."
-    pip install --user -e . || pip3 install --user -e .
-fi
-
-echo -e "${GREEN}✅ Package installed${NC}"
-
-# Create directories
-echo ""
-echo -e "${BLUE}Setting up directories...${NC}"
-mkdir -p "$VAULT_DIR"
-mkdir -p "$CONFIG_DIR"
-chmod 700 "$VAULT_DIR"
-chmod 700 "$CONFIG_DIR"
-echo -e "${GREEN}✅ Directories created${NC}"
-
-# Set up CLI scripts
-echo ""
-echo -e "${BLUE}Setting up CLI scripts...${NC}"
-
-# Determine where to put scripts
-if [ -d "$BIN_DIR" ]; then
-    TARGET_BIN="$BIN_DIR"
-elif [[ ":$PATH:" == *":$HOME/bin:"* ]]; then
-    TARGET_BIN="$HOME/bin"
-    mkdir -p "$TARGET_BIN"
-else
-    TARGET_BIN="$HOME/.local/bin"
-    mkdir -p "$TARGET_BIN"
-fi
-
-# Create symlinks or wrapper scripts
-for script in kimi-vault kimi-vault-session; do
-    if [ -f "$SCRIPT_DIR/bin/$script" ]; then
-        # Make script executable
-        chmod +x "$SCRIPT_DIR/bin/$script"
-        
-        # Create symlink or copy
-        if [ -L "$TARGET_BIN/$script" ]; then
-            rm "$TARGET_BIN/$script"
-        fi
-        
-        # Use absolute path in wrapper script
-        cat > "$TARGET_BIN/$script" << EOF
-#!/bin/bash
-# Wrapper for $script
-export PYTHONPATH="$SCRIPT_DIR/src:\${PYTHONPATH:-}"
-exec "$SCRIPT_DIR/bin/$script" "\$@"
-EOF
-        chmod +x "$TARGET_BIN/$script"
-        echo "  ✅ $script -> $TARGET_BIN/$script"
-    fi
-done
-
-# Also ensure python -m works
-if [ -f "$SCRIPT_DIR/src/kimi_vault/cli.py" ]; then
-    # Create wrapper for kimi-vault CLI
-    cat > "$TARGET_BIN/kimi-vault" << EOF
-#!/bin/bash
-# Wrapper for kimi-vault CLI
-export PYTHONPATH="$SCRIPT_DIR/src:\${PYTHONPATH:-}"
-exec python3 -m kimi_vault.cli "\$@"
-EOF
-    chmod +x "$TARGET_BIN/kimi-vault"
-    echo "  ✅ kimi-vault -> $TARGET_BIN/kimi-vault"
-fi
-
-echo -e "${GREEN}✅ CLI scripts installed${NC}"
-
-# Check PATH
-echo ""
-if [[ ":$PATH:" != *":$TARGET_BIN:"* ]]; then
-    echo -e "${YELLOW}⚠️  $TARGET_BIN is not in your PATH${NC}"
-    echo "Add this to your shell profile (~/.bashrc, ~/.zshrc, etc.):"
-    echo ""
-    echo "  export PATH=\"$TARGET_BIN:\$PATH\""
+if command -v kimi-vault &> /dev/null; then
+    CURRENT_VERSION=$(kimi-vault --version 2>&1 | head -1)
+    echo "Current installation: $CURRENT_VERSION"
     echo ""
     
-    # Offer to add it
-    read -p "Add to PATH automatically? (y/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        SHELL_RC=""
-        if [ -f "$HOME/.zshrc" ] && [ -n "${ZSH_VERSION:-}" ]; then
-            SHELL_RC="$HOME/.zshrc"
-        elif [ -f "$HOME/.bashrc" ]; then
-            SHELL_RC="$HOME/.bashrc"
-        elif [ -f "$HOME/.bash_profile" ]; then
-            SHELL_RC="$HOME/.bash_profile"
-        fi
-        
-        if [ -n "$SHELL_RC" ]; then
-            echo "" >> "$SHELL_RC"
-            echo "# Added by kimi-secrets-vault installer" >> "$SHELL_RC"
-            echo "export PATH=\"$TARGET_BIN:\$PATH\"" >> "$SHELL_RC"
-            echo -e "${GREEN}✅ Added to $SHELL_RC${NC}"
-            echo "Run 'source $SHELL_RC' or restart your shell to use it."
-        fi
-    fi
-else
-    echo -e "${GREEN}✅ $TARGET_BIN is already in PATH${NC}"
-fi
-
-# Generate key if it doesn't exist
-echo ""
-echo -e "${BLUE}Checking encryption keys...${NC}"
-if [ -f "$VAULT_DIR/key.txt" ]; then
-    echo -e "${GREEN}✅ Key already exists: $VAULT_DIR/key.txt${NC}"
-else
-    echo -e "${YELLOW}🔐 Generating new age key pair...${NC}"
-    if command -v age-keygen &> /dev/null; then
-        age-keygen -o "$VAULT_DIR/key.txt" 2>&1
-        chmod 600 "$VAULT_DIR/key.txt"
-        echo -e "${GREEN}✅ Key generated${NC}"
-        echo ""
-        echo -e "${YELLOW}⚠️  IMPORTANT: Back up your private key!${NC}"
-        echo "   Location: $VAULT_DIR/key.txt"
-        echo "   Public key: $(cat "$VAULT_DIR/key.txt.pub" 2>/dev/null || echo 'N/A')"
-        echo ""
-        echo "   Store a copy in your password manager or encrypted USB."
-        echo "   If you lose this key, you CANNOT decrypt your secrets."
+    if [ "$VERSION" = "main" ]; then
+        echo "Upgrading to latest version from main branch..."
     else
-        echo -e "${YELLOW}⚠️  age-keygen not found. Run 'kimi-vault init' after installing age.${NC}"
+        echo "Upgrading to version: $VERSION"
     fi
-fi
-
-# Create example config
-echo ""
-echo -e "${BLUE}Setting up configuration...${NC}"
-if [ -f "$CONFIG_DIR/config" ]; then
-    echo -e "${GREEN}✅ Config already exists: $CONFIG_DIR/config${NC}"
 else
-    cat > "$CONFIG_DIR/config" << 'EOF'
-# Kimi Secrets Vault Configuration
-# Uncomment and modify as needed
-
-# vault_dir = ~/.kimi-vault
-# key_file = ~/.kimi-vault/key.txt
-# secrets_file = ~/.kimi-vault/secrets.json.age
-
-# Gmail OAuth credentials (optional - can also be in secrets.json)
-# client_id = your-client-id.apps.googleusercontent.com
-# client_secret = your-client-secret
-EOF
-    chmod 600 "$CONFIG_DIR/config"
-    echo -e "${GREEN}✅ Created example config: $CONFIG_DIR/config${NC}"
+    echo "Fresh installation..."
 fi
 
-# Summary
+# Uninstall old version (if exists)
 echo ""
-echo -e "${GREEN}=====================================${NC}"
-echo -e "${GREEN}✅ Installation Complete!${NC}"
-echo -e "${GREEN}=====================================${NC}"
+echo "Step 1: Removing old installation (if any)..."
+pip3 uninstall kimi-secrets-vault -y 2>/dev/null || true
+echo "   ✓ Cleaned up"
+
+# Install new version
 echo ""
-echo "Quick start:"
+echo "Step 2: Installing from GitHub..."
+if [ "$VERSION" = "main" ]; then
+    echo "   Installing latest from main branch..."
+    pip3 install "git+${REPO_URL}" --quiet
+else
+    echo "   Installing version ${VERSION}..."
+    pip3 install "git+${REPO_URL}@${VERSION}" --quiet
+fi
+echo "   ✓ Installation complete"
+
+# Verify installation
 echo ""
-echo "  1. Set up Gmail API (optional):"
-echo "     See docs/GMAIL_SETUP.md for instructions"
-echo ""
-echo "  2. Add your secrets:"
-echo "     cp config/secrets.template.json $VAULT_DIR/secrets.json"
-echo "     # Edit secrets.json with your credentials"
-echo "     age -r \$(cat $VAULT_DIR/key.txt.pub) -o $VAULT_DIR/secrets.json.age $VAULT_DIR/secrets.json"
-echo "     shred -u $VAULT_DIR/secrets.json"
-echo ""
-echo "  3. Start a secure session:"
-echo "     kimi-vault-session"
-echo ""
-echo "  4. Use the CLI:"
-echo "     kimi-vault unread"
-echo "     kimi-vault search \"from:boss\""
-echo ""
-echo "Documentation:"
-echo "  - README.md - Overview and usage"
-echo "  - docs/INSTALL.md - Detailed installation"
-echo "  - docs/GMAIL_SETUP.md - Gmail API setup"
-echo ""
+echo "Step 3: Verifying installation..."
+if command -v kimi-vault &> /dev/null; then
+    echo ""
+    kimi-vault --version
+    echo ""
+    echo "✅ kimi-vault is now installed!"
+    echo ""
+    echo "Next steps:"
+    echo "   1. Initialize your vault:"
+    echo "      kimi-vault init"
+    echo ""
+    echo "   2. Check available plugins:"
+    echo "      kimi-vault plugins list"
+    echo ""
+    echo "   3. Start using it:"
+    echo "      kimi-vault gmail.inbox"
+    echo ""
+    echo "For help: kimi-vault --help"
+else
+    echo "❌ Installation verification failed"
+    echo "   Try running: pip3 install --user git+${REPO_URL}"
+    exit 1
+fi
