@@ -5,6 +5,7 @@ Core vault operations - encryption/decryption with age
 import subprocess
 import tempfile
 import os
+import platform
 from pathlib import Path
 from typing import Optional, Union
 
@@ -12,6 +13,40 @@ from typing import Optional, Union
 class VaultCryptoError(Exception):
     """Raised when encryption/decryption operations fail"""
     pass
+
+
+def get_secure_temp_dir() -> Optional[Path]:
+    """
+    Get the best available secure temp directory.
+    
+    Priority:
+    1. /dev/shm (RAM - Linux, never hits disk)
+    2. /private/tmp (RAM-backed on macOS)
+    3. System temp (fallback - may hit disk)
+    
+    Returns None if no secure option available.
+    """
+    # Linux: /dev/shm is a RAM-backed tmpfs
+    if platform.system() == "Linux":
+        shm_path = Path("/dev/shm")
+        if shm_path.exists() and shm_path.is_dir():
+            # Check if we can write to it
+            try:
+                test_file = shm_path / ".kimi-vault-test"
+                test_file.touch()
+                test_file.unlink()
+                return shm_path
+            except (PermissionError, OSError):
+                pass
+    
+    # macOS: /private/tmp is usually RAM-backed
+    if platform.system() == "Darwin":
+        mac_tmp = Path("/private/tmp")
+        if mac_tmp.exists() and mac_tmp.is_dir():
+            return mac_tmp
+    
+    # Fallback: None (use system default)
+    return None
 
 
 class Vault:
@@ -177,10 +212,22 @@ class Vault:
             raise VaultCryptoError(f"Private key not found: {self.key_file}")
         
         if plaintext_path is None:
-            # Create secure temp file
-            fd, output_path = tempfile.mkstemp(prefix="kimi-vault-secrets-", suffix=".json")
-            os.close(fd)
-            output_path = Path(output_path)
+            # Create secure temp file in RAM if possible
+            temp_dir = get_secure_temp_dir()
+            if temp_dir:
+                # Use RAM-backed temp directory
+                fd, output_path = tempfile.mkstemp(
+                    prefix="kimi-vault-secrets-",
+                    suffix=".json",
+                    dir=str(temp_dir)
+                )
+                os.close(fd)
+                output_path = Path(output_path)
+            else:
+                # Fallback to system temp
+                fd, output_path = tempfile.mkstemp(prefix="kimi-vault-secrets-", suffix=".json")
+                os.close(fd)
+                output_path = Path(output_path)
         else:
             output_path = Path(plaintext_path).expanduser()
         
@@ -222,15 +269,41 @@ class Vault:
             raise VaultCryptoError(f"Decryption failed: {e.stderr.decode()}")
 
 
+def is_ram_disk(path: Union[str, Path]) -> bool:
+    """Check if path is on a RAM-backed filesystem (tmpfs)"""
+    try:
+        result = subprocess.run(
+            ["df", "-T", str(path)],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return "tmpfs" in result.stdout
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
 def secure_delete(file_path: Union[str, Path]):
     """
-    Securely delete a file using shred if available, otherwise regular delete.
+    Securely delete a file.
+    
+    If the file is on a RAM disk (tmpfs), regular delete is sufficient
+    since the data was never on physical disk.
+    
+    Otherwise, use shred to overwrite before deleting (best effort on SSDs).
     """
     path = Path(file_path).expanduser()
     if not path.exists():
         return
     
-    # Try shred first (Linux/Mac)
+    # Check if on RAM disk
+    if is_ram_disk(path):
+        # On RAM disk - regular delete is sufficient
+        # Data was never on physical storage
+        path.unlink()
+        return
+    
+    # On physical storage - try shred first
     try:
         subprocess.run(
             ["shred", "-u", str(path)],
