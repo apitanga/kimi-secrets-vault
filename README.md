@@ -375,7 +375,14 @@ class CustomPlugin(Plugin):
 
 **⚠️ Important:** Back up your `~/.kimi-vault/key.txt` offline. Lose this key = lose access to all secrets.
 
-**⚠️ Security Note on SSDs:** While this tool uses `shred` to wipe temporary files, modern SSDs with wear-leveling cannot guarantee that data is physically overwritten in place. For maximum security, we strongly recommend using this tool on a machine with Full Disk Encryption enabled (e.g., FileVault on macOS, BitLocker on Windows, or LUKS on Linux).
+**⚠️ Security Note on SSDs:** 
+
+This tool now uses **RAM-backed storage** (`/dev/shm` on Linux) for temporary decrypted files whenever available. This means:
+- ✅ Secrets never touch physical disk during sessions (on Linux)
+- ✅ `shred` is effective (data is truly gone on RAM reset)
+- ✅ Automatic cleanup on system reboot
+
+For systems without RAM disk support or maximum security, we still recommend **Full Disk Encryption** (FileVault on macOS, BitLocker on Windows, or LUKS on Linux).
 
 ## Git Hooks for Test Protection
 
