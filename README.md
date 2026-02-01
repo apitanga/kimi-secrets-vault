@@ -40,13 +40,7 @@ sudo dnf install age
 
 ### 2. Install kimi-secrets-vault
 
-**Option A: One-line install (Recommended)**
-
-```bash
-curl -sSL https://raw.githubusercontent.com/apitanga/kimi-secrets-vault/main/install.sh | bash
-```
-
-**Option B: Install from GitHub with pip**
+**Option A: Install from GitHub (Recommended for users)**
 
 ```bash
 # Latest version
@@ -56,12 +50,21 @@ pip install git+https://github.com/apitanga/kimi-secrets-vault.git
 pip install git+https://github.com/apitanga/kimi-secrets-vault.git@v1.0.0
 ```
 
-**Option C: Clone and install locally**
+**Option B: Clone and install locally (for development)**
 
 ```bash
 git clone https://github.com/apitanga/kimi-secrets-vault.git
 cd kimi-secrets-vault
-./install.sh
+pip install .
+
+# Or for development (editable install):
+pip install -e .
+```
+
+**Option C: One-line install script**
+
+```bash
+curl -sSL https://raw.githubusercontent.com/apitanga/kimi-secrets-vault/main/install.sh | bash
 ```
 
 ### 2. Initialize Vault
@@ -406,11 +409,13 @@ See [GIT_HOOKS.md](GIT_HOOKS.md) for detailed documentation.
 ### Fresh Install
 
 ```bash
-# One-line installer (recommended)
-curl -sSL https://raw.githubusercontent.com/apitanga/kimi-secrets-vault/main/install.sh | bash
-
-# Or with pip
+# Install from GitHub (recommended)
 pip install git+https://github.com/apitanga/kimi-secrets-vault.git
+
+# Or clone and install locally
+git clone https://github.com/apitanga/kimi-secrets-vault.git
+cd kimi-secrets-vault
+pip install .
 ```
 
 ### Upgrading
@@ -431,7 +436,7 @@ pip install --upgrade git+https://github.com/apitanga/kimi-secrets-vault.git
 ```bash
 git clone https://github.com/apitanga/kimi-secrets-vault.git
 cd kimi-secrets-vault
-./install.sh --dev
+pip install -e .  # Editable install
 ```
 
 See [docs/INSTALL.md](docs/INSTALL.md) for detailed instructions.

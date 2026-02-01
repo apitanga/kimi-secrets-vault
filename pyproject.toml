@@ -44,7 +44,7 @@ dev = [
 ]
 
 [project.scripts]
-kimi-vault = "kimi_vault.cli:main"
+kimi-vault = "kimi_vault.cli.main:main"
 
 [project.urls]
 Homepage = "https://github.com/apitanga/kimi-secrets-vault"
