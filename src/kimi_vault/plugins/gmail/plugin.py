@@ -54,6 +54,12 @@ class GmailPlugin(Plugin):
                 args=[("limit", "Maximum number of emails", False)]
             ),
             PluginCommand(
+                name="recent",
+                description="List most recent emails (read or unread)",
+                handler=self.cmd_recent,
+                args=[("limit", "Maximum number of emails", False)]
+            ),
+            PluginCommand(
                 name="search",
                 description="Search emails by query",
                 handler=self.cmd_search,
@@ -112,6 +118,31 @@ class GmailPlugin(Plugin):
             return "No unread emails."
         
         lines = [f"{len(emails)} unread email(s):"]
+        lines.append("")
+        for i, email in enumerate(emails, 1):
+            lines.append(f"{i}. {email['subject']}")
+            lines.append(f"   From: {email['from']}")
+            lines.append(f"   Date: {email['date']}")
+            if email['snippet']:
+                lines.append(f"   Preview: {email['snippet'][:100]}...")
+            lines.append("")
+        
+        return "\n".join(lines)
+    
+    def cmd_recent(self, limit: str = "10") -> str:
+        """List most recent emails (read or unread)"""
+        try:
+            max_results = int(limit) if limit else 10
+        except ValueError:
+            max_results = 10
+        
+        client = self._get_client()
+        emails = client.list_recent(max_results=max_results)
+        
+        if not emails:
+            return "No emails found."
+        
+        lines = [f"{len(emails)} recent email(s):"]
         lines.append("")
         for i, email in enumerate(emails, 1):
             lines.append(f"{i}. {email['subject']}")
