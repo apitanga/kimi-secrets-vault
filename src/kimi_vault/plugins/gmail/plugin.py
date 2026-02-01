@@ -111,13 +111,14 @@ class GmailPlugin(Plugin):
         if not emails:
             return "No unread emails."
         
-        lines = [f"📧 {len(emails)} Unread Email(s):\n"]
+        lines = [f"{len(emails)} Unread Email(s):"]
+        lines.append("")
         for i, email in enumerate(emails, 1):
-            lines.append(f"{i}. {email['subject']}")
+            lines.append(f"{i}. Subject: {email['subject']}")
             lines.append(f"   From: {email['from']}")
             lines.append(f"   Date: {email['date']}")
             if email['snippet']:
-                lines.append(f"   {email['snippet']}...")
+                lines.append(f"   Preview: {email['snippet'][:100]}...")
             lines.append("")
         
         return "\n".join(lines)
@@ -138,7 +139,8 @@ class GmailPlugin(Plugin):
         if not emails:
             return f"No emails found for '{query}'."
         
-        lines = [f"🔍 {len(emails)} Result(s) for '{query}':\n"]
+        lines = [f"{len(emails)} Result(s) for '{query}':"]
+        lines.append("")
         for i, email in enumerate(emails, 1):
             lines.append(f"{i}. {email['subject']}")
             lines.append(f"   From: {email['from']}")
@@ -157,7 +159,8 @@ class GmailPlugin(Plugin):
         if not labels:
             return "No labels found."
         
-        lines = [f"🏷️  {len(labels)} Label(s):\n"]
+        lines = [f"{len(labels)} Label(s):"]
+        lines.append("")
         for label in labels:
             lines.append(f"  - {label['name']}")
         
@@ -172,7 +175,7 @@ class GmailPlugin(Plugin):
             return "Could not fetch profile."
         
         lines = [
-            "👤 Gmail Profile:",
+            "Gmail Profile:"
             f"  Email: {profile.get('emailAddress', 'N/A')}",
             f"  Messages: {profile.get('messagesTotal', 'N/A')}",
             f"  Threads: {profile.get('threadsTotal', 'N/A')}"
@@ -189,7 +192,7 @@ class GmailPlugin(Plugin):
         draft = client.create_draft(to, subject, body)
         
         if draft:
-            return f"📄 Draft created with ID: {draft['id']}"
+            return f"Draft created with ID: {draft['id']}"
         else:
             return "❌ Failed to create draft"
     
@@ -202,7 +205,7 @@ class GmailPlugin(Plugin):
         sent = client.send(to, subject, body)
         
         if sent:
-            return f"✉️  Email sent! Message ID: {sent['id']}"
+            return f"Email sent! Message ID: {sent['id']}"
         else:
             return "❌ Failed to send email"
     
