@@ -235,11 +235,15 @@ class TestSecureDelete:
         test_file = temp_dir / "nonexistent.txt"
         secure_delete(test_file)  # Should not raise
     
+    @patch('kimi_vault.core.vault.is_ram_disk')
     @patch('subprocess.run')
-    def test_secure_delete_with_shred(self, mock_run, temp_dir):
+    def test_secure_delete_with_shred(self, mock_run, mock_is_ram_disk, temp_dir):
         """Test secure_delete using shred command."""
         test_file = temp_dir / "test.txt"
         test_file.write_text("test content")
+        
+        # Mock as not RAM disk
+        mock_is_ram_disk.return_value = False
         
         # Mock shred to succeed
         mock_result = Mock()
@@ -253,12 +257,30 @@ class TestSecureDelete:
             check=True
         )
     
+    @patch('kimi_vault.core.vault.is_ram_disk')
     @patch('subprocess.run', side_effect=FileNotFoundError())
-    def test_secure_delete_fallback(self, mock_run, temp_dir):
+    def test_secure_delete_fallback(self, mock_run, mock_is_ram_disk, temp_dir):
         """Test secure_delete falls back to unlink when shred not found."""
         test_file = temp_dir / "test.txt"
         test_file.write_text("test content")
         assert test_file.exists()
         
+        # Mock as not RAM disk
+        mock_is_ram_disk.return_value = False
+        
         secure_delete(test_file)
         assert not test_file.exists()
+    
+    @patch('kimi_vault.core.vault.is_ram_disk')
+    def test_secure_delete_on_ram_disk(self, mock_is_ram_disk, temp_dir):
+        """Test secure_delete skips shred on RAM disk."""
+        test_file = temp_dir / "test.txt"
+        test_file.write_text("test content")
+        assert test_file.exists()
+        
+        # Mock as RAM disk
+        mock_is_ram_disk.return_value = True
+        
+        secure_delete(test_file)
+        assert not test_file.exists()
+        # shred should not be called for RAM disk
