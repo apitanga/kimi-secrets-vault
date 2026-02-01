@@ -113,7 +113,7 @@ These hooks help maintain code quality. You can skip them temporarily with `--no
 ## Contributing Areas
 
 ### 1. Plugin Development
-Plugins are the primary way to extend Kimi Secrets Vault. See [PLUGIN_DEVELOPMENT.md](PLUGIN_DEVELOPMENT.md) for detailed guidelines.
+Plugins are the primary way to extend Kimi Secrets Vault. See [Plugin Development Guide](docs/development/PLUGIN_DEVELOPMENT.md) for detailed guidelines.
 
 #### Plugin Requirements:
 - Must inherit from `BasePlugin` class
