@@ -337,6 +337,27 @@ class CustomPlugin(Plugin):
 
 **⚠️ Important:** Back up your `~/.kimi-vault/key.txt` offline. Lose this key = lose access to all secrets.
 
+## Git Hooks for Test Protection
+
+The project includes git hooks that automatically run tests before commits and pushes:
+
+### Pre-push Hook
+- Runs full test suite before `git push`
+- Blocks push if any tests fail
+- Ensures no broken code reaches remote repositories
+
+### Pre-commit Hook  
+- Runs quick tests on staged files before `git commit`
+- Catches test failures early in development workflow
+
+**To skip hooks temporarily**: Use `--no-verify` flag:
+```bash
+git commit --no-verify -m "Emergency fix"
+git push --no-verify
+```
+
+See [GIT_HOOKS.md](GIT_HOOKS.md) for detailed documentation.
+
 ## Requirements
 
 - Python 3.9+
