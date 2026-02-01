@@ -1,6 +1,6 @@
-# Gmail API Setup Guide
+# Gmail Plugin Setup Guide
 
-This guide walks you through setting up Gmail API access for kimi-secrets-vault.
+This guide walks you through setting up the Gmail plugin for kimi-secrets-vault.
 
 ## Overview
 
@@ -14,13 +14,35 @@ This guide walks you through setting up Gmail API access for kimi-secrets-vault.
 - A Google Cloud project (free tier is fine)
 - 15-20 minutes
 
+## Architecture
+
+The Gmail plugin is a standard kimi-vault plugin that:
+- Loads credentials from the vault's encrypted secrets
+- Uses Google's official API libraries
+- Auto-refreshes OAuth tokens before expiry
+- Provides CLI commands through the plugin system
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  User CLI   │────▶│ GmailPlugin │────▶│ GmailClient │
+│kimi-vault   │     │             │     │             │
+│gmail.unread │     │ • validate  │     │ • OAuth     │
+│gmail.send   │     │ • commands  │     │ • API calls │
+└─────────────┘     └──────┬──────┘     └─────────────┘
+                           │
+                    ┌──────┴──────┐
+                    │ Vault Core  │
+                    │ (encrypted) │
+                    └─────────────┘
+```
+
 ## Step 1: Create a Google Cloud Project
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Sign in with your Google account
 3. Click the project selector at the top
 4. Click **New Project**
-5. Enter a name (e.g., "kimi-vault-personal")
+5. Enter a name (e.g., "kimi-vault-gmail")
 6. Click **Create**
 7. Wait for it to create, then select your new project
 
@@ -38,7 +60,7 @@ This guide walks you through setting up Gmail API access for kimi-secrets-vault.
 2. Select **External** (or **Internal** if you have a Workspace org)
 3. Click **Create**
 4. Fill in:
-   - **App name**: "Kimi Vault Personal" (or whatever you want)
+   - **App name**: "Kimi Vault Gmail" (or whatever you want)
    - **User support email**: Your email
    - **Developer contact information**: Your email
 5. Click **Save and Continue**
@@ -69,35 +91,9 @@ This guide walks you through setting up Gmail API access for kimi-secrets-vault.
 
 ## Step 5: Get Refresh Token
 
-You have two options:
+The refresh token is what the plugin uses to access Gmail on your behalf.
 
-### Option A: Using kimi-vault-oauth (Easiest)
-
-1. Set your credentials as environment variables:
-   ```bash
-   export KIMI_VAULT_CLIENT_ID="your-client-id.apps.googleusercontent.com"
-   export KIMI_VAULT_CLIENT_SECRET="your-client-secret"
-   ```
-
-2. Or add them to your config:
-   ```bash
-   echo "client_id = your-client-id.apps.googleusercontent.com" >> ~/.config/kimi-vault/config
-   echo "client_secret = your-client-secret" >> ~/.config/kimi-vault/config
-   ```
-
-3. Run the OAuth helper:
-   ```bash
-   kimi-vault-oauth
-   ```
-
-4. Follow the prompts:
-   - Click the authorization URL
-   - Sign in with your Google account
-   - Grant permissions
-   - Copy the callback URL back to the terminal
-   - Get your refresh token
-
-### Option B: Using Google's OAuth Playground
+### Option A: Using Google's OAuth Playground (Easiest)
 
 1. Go to [OAuth Playground](https://developers.google.com/oauthplayground)
 2. Click the **Settings** (gear) icon
@@ -107,7 +103,7 @@ You have two options:
    - **OAuth Client Secret**: (from your client_secret.json)
 5. Close settings
 6. In "Select & authorize APIs":
-   - Find and select both:
+   - Find and select both scopes:
      - `https://www.googleapis.com/auth/gmail.readonly`
      - `https://www.googleapis.com/auth/gmail.compose`
    - Click **Authorize APIs**
@@ -116,7 +112,25 @@ You have two options:
 9. Click **Exchange authorization code for tokens**
 10. Copy the **Refresh token** (long string starting with `1//`)
 
-## Step 6: Create Your Secrets File
+### Option B: Python Script
+
+If you prefer:
+
+```python
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+SCOPES = [
+    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/gmail.compose'
+]
+
+flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
+credentials = flow.run_local_server(port=0)
+
+print(f"Refresh token: {credentials.refresh_token}")
+```
+
+## Step 6: Add Credentials to Vault
 
 1. Copy the template:
    ```bash
@@ -135,25 +149,20 @@ You have two options:
    }
    ```
 
-3. Get your public key:
-   ```bash
-   cat ~/.kimi-vault/key.txt.pub
-   ```
-
-4. Encrypt the secrets:
+3. Encrypt with your vault key:
    ```bash
    age -r $(cat ~/.kimi-vault/key.txt.pub) \
      -o ~/.kimi-vault/secrets.json.age \
      ~/.kimi-vault/secrets.json
    ```
 
-5. Securely delete the plaintext:
+4. Securely delete plaintext:
    ```bash
    shred -u ~/.kimi-vault/secrets.json
    # Or on macOS: rm -P ~/.kimi-vault/secrets.json
    ```
 
-6. (Optional) Also delete the downloaded client_secret.json:
+5. Also delete the downloaded client_secret.json:
    ```bash
    shred -u client_secret.json
    ```
@@ -161,34 +170,49 @@ You have two options:
 ## Step 7: Test!
 
 ```bash
-# Start a secure session
-kimi-vault-session
+# Check plugin loaded
+kimi-vault plugins list
+# Should show: gmail - Gmail integration - read, search, and send emails
 
-# Test the CLI
-kimi-vault unread
-kimi-vault profile
+# Test commands
+kimi-vault gmail.profile
+kimi-vault gmail.unread
+kimi-vault gmail.labels
 
-# Or use Python
-python3 -c "
-from kimi_vault import GmailClient
-client = GmailClient()
-profile = client.get_profile()
-print(f'Email: {profile['emailAddress']}')
-print(f'Unread: {len(client.list_unread())} messages')
-"
+# Search
+kimi-vault gmail.search "from:boss@company.com"
+
+# Send a test email (to yourself)
+kimi-vault gmail.send "your-email@example.com" "Test" "This is a test email from kimi-vault!"
 ```
+
+## Using in a Session
+
+```bash
+# Start a secure session
+kimi-vault session
+
+# Inside the session, same commands work:
+$ kimi-vault gmail.unread 5
+$ kimi-vault gmail.search "subject:invoice"
+```
+
+The vault automatically:
+- Decrypts secrets when you start the session
+- Makes them available to the Gmail plugin
+- Securely shreds them when you exit
 
 ## Troubleshooting
 
 ### "Access blocked: app not verified"
 
-Google shows a scary warning because it's a personal app (not verified by Google).
+Google shows a warning because it's a personal app (not verified by Google).
 
 1. Click **Advanced**
 2. Click **Go to [your app name] (unsafe)**
 3. Continue with authorization
 
-This is normal for personal OAuth apps. Since you're the developer and the user, this is fine.
+This is normal for personal OAuth apps.
 
 ### "Invalid client" errors
 
@@ -198,41 +222,44 @@ This is normal for personal OAuth apps. Since you're the developer and the user,
 
 ### "Refresh token expired"
 
-Refresh tokens for "Testing" apps expire after 7 days. This is Google's policy for unverified apps.
+Refresh tokens for "Testing" apps expire after 7 days.
 
-**Solutions:**
-1. **Re-authorize** - Just run `kimi-vault-oauth` again and get a new refresh token
-2. **Publish your app** - Go through Google's verification process (complex, not needed for personal use)
-3. **Use a Workspace account** - If you have Google Workspace, your app can stay in "Internal" mode
+**Solution:** Repeat Step 5 to get a new refresh token, then update your vault.
 
-### "Rate limit exceeded"
+### Plugin not showing in list
 
-The client handles rate limiting automatically with exponential backoff. Just wait a moment.
+```bash
+# Check if secrets file exists
+ls ~/.kimi-vault/secrets.json.age
 
-If you consistently hit limits:
-- Check your [API Console quotas](https://console.cloud.google.com/apis/api/gmail.googleapis.com/quotas)
-- Reduce the frequency of API calls
-- Request a quota increase from Google
+# Decrypt and verify content
+age -d -i ~/.kimi-vault/key.txt ~/.kimi-vault/secrets.json.age | python -m json.tool
 
-### No refresh token received
+# Should have "gmail" section with all required fields
+```
 
-If `kimi-vault-oauth` shows "NOT FOUND" for refresh token:
+### "Missing Gmail configuration"
 
-1. Go to [Google Account Permissions](https://myaccount.google.com/permissions)
-2. Find your app and click it
-3. Click **Remove Access**
-4. Run `kimi-vault-oauth` again
-5. Make sure to check "See and download all your Gmail" during authorization
+The plugin needs these fields in secrets.json:
+- `client_id`
+- `client_secret`
+- `refresh_token`
+
+Check that all are present:
+```bash
+age -d -i ~/.kimi-vault/key.txt ~/.kimi-vault/secrets.json.age | \
+  python -c "import sys, json; d=json.load(sys.stdin); print('gmail' in d and all(k in d['gmail'] for k in ['client_id', 'client_secret', 'refresh_token']))"
+```
 
 ## Security Notes
 
-- **Scope**: We use `gmail.readonly` + `gmail.compose` - the vault can read and compose emails but cannot delete or modify existing ones
+- **Scope**: We use `gmail.readonly` + `gmail.compose` - can read and compose emails but cannot delete or modify existing ones
 - **Token storage**: Tokens are encrypted at rest with age, decrypted only during sessions
 - **Session lifetime**: Secrets exist only in `/tmp/` during the session
 - **Cleanup**: Automatically shredded when the session ends
 
 ## Next Steps
 
-- See [README.md](../README.md) for full usage documentation
-- Learn about [Python API](../README.md#python-api) for programmatic access
-- Check out the [CLI reference](../README.md#cli-reference)
+- See the main [README.md](../README.md) for full plugin documentation
+- Learn how to create [custom plugins](../README.md#creating-a-plugin)
+- Set up additional plugins (Calendar coming soon)
