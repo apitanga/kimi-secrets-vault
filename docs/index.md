@@ -1,12 +1,14 @@
 ---
-title: Kimi Secrets Vault Documentation
+title: HOME
 nav_order: 0
 ---
 
-# Kimi Secrets Vault Documentation
+# Kimi Secrets Vault
+
+Secure, plugin-based API credential management for AI assistants
 
 ## Overview
-Kimi Secrets Vault is a secure, plugin-based API credential management system for AI assistants with age encryption.
+Kimi Secrets Vault is a secure, plugin-based API credential management system for AI assistants with age encryption. It provides encrypted storage for API credentials with just-in-time decryption, plugin-based service integration, and a simple CLI interface.
 
 ## Quick Links
 

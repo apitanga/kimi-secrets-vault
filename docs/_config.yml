@@ -21,7 +21,7 @@ just_the_docs:
   # Navigation configuration
   nav_folders: true
   nav:
-    - title: Home
+    - title: HOME
       url: /
     - title: Getting Started
       children:
