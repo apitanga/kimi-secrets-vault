@@ -47,7 +47,7 @@ Kimi Secrets Vault is a secure, plugin-based API credential management system fo
 ## Getting Help
 - [GitHub Issues](https://github.com/apitanga/kimi-secrets-vault/issues) - Report bugs or request features
 - [Contributing Guide](../CONTRIBUTING.md) - How to contribute
-- [Security Policy](SECURITY.md) - Security reporting and policies
+- [Security Policy](security/SECURITY.md) - Security reporting and policies
 
 ---
 

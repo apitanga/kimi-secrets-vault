@@ -11,7 +11,7 @@ This document covers security aspects of Kimi Secrets Vault, including threat mo
 
 ## Security Policy
 
-For reporting security vulnerabilities, see the [Security Policy](../SECURITY.md).
+For reporting security vulnerabilities, see the [Security Policy](SECURITY.md).
 
 **Important**: Do not report security issues publicly. Email `security@pitanga.org` instead.
 
@@ -173,7 +173,7 @@ Kimi Secrets Vault is **NOT** suitable for:
 - [Architecture](../development/ARCHITECTURE.md) - System design and security model
 - [Plugin Development](../development/PLUGIN_DEVELOPMENT.md) - Secure plugin creation
 - [Testing Guide](../development/TESTS.md) - Security testing practices
-- [Security Policy](../SECURITY.md) - Vulnerability reporting
+- [Security Policy](SECURITY.md) - Vulnerability reporting
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Security Policy
-nav_order: 85
+nav_order: 81
 ---
 
 # Security Policy
