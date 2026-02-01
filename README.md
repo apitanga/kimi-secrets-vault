@@ -372,6 +372,8 @@ class CustomPlugin(Plugin):
 
 **⚠️ Important:** Back up your `~/.kimi-vault/key.txt` offline. Lose this key = lose access to all secrets.
 
+**⚠️ Security Note on SSDs:** While this tool uses `shred` to wipe temporary files, modern SSDs with wear-leveling cannot guarantee that data is physically overwritten in place. For maximum security, we strongly recommend using this tool on a machine with Full Disk Encryption enabled (e.g., FileVault on macOS, BitLocker on Windows, or LUKS on Linux).
+
 ## Git Hooks for Test Protection
 
 The project includes git hooks that automatically run tests before commits and pushes:
