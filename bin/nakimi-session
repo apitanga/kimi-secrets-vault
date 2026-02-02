@@ -1,5 +1,5 @@
 #!/bin/bash
-# Wrapper for kimi-vault session
+# Wrapper for nakimi session
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export PYTHONPATH="${SCRIPT_DIR}/../src:${PYTHONPATH:-}"
-exec python3 -m kimi_vault.cli session "$@"
+exec python3 -m nakimi.cli session "$@"
