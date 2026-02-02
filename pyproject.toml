@@ -47,10 +47,10 @@ dev = [
 nakimi = "nakimi.cli.main:main"
 
 [project.urls]
-Homepage = "https://github.com/apitanga/kimi-secrets-vault"
-Repository = "https://github.com/apitanga/kimi-secrets-vault"
-Documentation = "https://github.com/apitanga/kimi-secrets-vault/blob/main/README.md"
-Issues = "https://github.com/apitanga/kimi-secrets-vault/issues"
+Homepage = "https://github.com/apitanga/nakimi"
+Repository = "https://github.com/apitanga/nakimi"
+Documentation = "https://github.com/apitanga/nakimi/blob/main/README.md"
+Issues = "https://github.com/apitanga/nakimi/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

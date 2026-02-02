@@ -1,10 +1,10 @@
 #!/bin/bash
 # Install or upgrade nakimi from GitHub
-# Usage: curl -sSL https://raw.githubusercontent.com/apitanga/kimi-secrets-vault/main/install.sh | bash
+# Usage: curl -sSL https://raw.githubusercontent.com/apitanga/nakimi/main/install.sh | bash
 
 set -e
 
-REPO_URL="https://github.com/apitanga/kimi-secrets-vault.git"
+REPO_URL="https://github.com/apitanga/nakimi.git"
 VERSION="${1:-main}"  # Default to main branch, or specify version
 
 echo "╔════════════════════════════════════════════════════════════╗"

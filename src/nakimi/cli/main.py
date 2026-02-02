@@ -173,7 +173,7 @@ def cmd_run(args):
 
 def cmd_upgrade(args):
     """Upgrade nakimi to latest version from GitHub"""
-    repo_url = "https://github.com/apitanga/kimi-secrets-vault.git"
+    repo_url = "https://github.com/apitanga/nakimi.git"
     
     print(f"🔄 Upgrading nakimi...")
     print(f"   Repository: {repo_url}")

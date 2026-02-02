@@ -1,5 +1,5 @@
-# GitHub Pages configuration for Kimi Secrets Vault documentation
-title: Kimi Secrets Vault
+# GitHub Pages configuration for Nakimi documentation
+title: Nakimi
 description: Secure, plugin-based API credential management for AI assistants
 remote_theme: pmarsceill/just-the-docs
 
@@ -49,10 +49,10 @@ just_the_docs:
   # Auxiliary links
   aux_links:
     "View on GitHub":
-      - "//github.com/apitanga/kimi-secrets-vault"
+      - "//github.com/apitanga/nakimi"
 
   # Footer content
-  footer_content: "Copyright &copy; 2026 Kimi Secrets Vault. Distributed under MIT License."
+  footer_content: "Copyright &copy; 2026 Nakimi. Distributed under MIT License."
 
   # Color scheme
   color_scheme: light
@@ -76,8 +76,8 @@ just_the_docs:
 
 # Site settings
 url: "https://apitanga.github.io"
-baseurl: "/kimi-secrets-vault"
-repository: "apitanga/kimi-secrets-vault"
+baseurl: "/nakimi"
+repository: "apitanga/nakimi"
 
 # Navigation (configured in just_the_docs.nav above)
 
