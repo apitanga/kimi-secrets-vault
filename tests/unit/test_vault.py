@@ -8,10 +8,19 @@ from unittest.mock import patch, Mock
 import pytest
 
 from nakimi.core.vault import Vault, VaultCryptoError, secure_delete
+from nakimi.core.config import reset_config
 
 
 class TestVault:
     """Test Vault class encryption/decryption operations."""
+    
+    def setup_method(self):
+        """Reset config before each test to avoid picking up real config."""
+        import os
+        import tempfile
+        # Set config to a non-existent file to prevent reading real config
+        os.environ["NAKIMI_CONFIG"] = tempfile.mktemp(prefix="nakimi-test-config-")
+        reset_config()
     
     def test_init_default_paths(self, temp_dir):
         """Test Vault initialization with default paths."""

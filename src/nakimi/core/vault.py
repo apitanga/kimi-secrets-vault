@@ -140,17 +140,33 @@ class Vault:
             key_file: Path to age private key (default: ~/.nakimi/key.txt)
             vault_dir: Directory for vault files (default: ~/.nakimi)
         """
-        # Use config if not provided
-        if key_file is None or vault_dir is None:
-            from .config import get_config
-            config = get_config()
-            if vault_dir is None:
-                vault_dir = config.vault_dir
-            if key_file is None:
-                key_file = config.key_file
+        # Load config for defaults
+        from .config import get_config
+        config = get_config()
         
-        self.vault_dir = Path(vault_dir).expanduser() if vault_dir else Path.home() / ".nakimi"
-        self.key_file = Path(key_file).expanduser() if key_file else self.vault_dir / "key.txt"
+        # Determine vault_dir
+        if vault_dir is not None:
+            vault_dir = Path(vault_dir).expanduser()
+        elif key_file is not None:
+            # vault_dir not provided, but key_file is -> derive from key_file
+            vault_dir = Path(key_file).expanduser().parent
+        else:
+            # Neither provided, use config
+            vault_dir = config.vault_dir
+        
+        # Determine key_file
+        if key_file is not None:
+            key_file = Path(key_file).expanduser()
+        elif vault_dir is not None:
+            # key_file not provided, but vault_dir is -> derive from vault_dir
+            key_file = vault_dir / "key.txt"
+        else:
+            # Neither provided, use config
+            key_file = config.key_file
+        
+        # Final assignments with fallbacks
+        self.vault_dir = vault_dir if vault_dir else Path.home() / ".nakimi"
+        self.key_file = key_file if key_file else self.vault_dir / "key.txt"
         self.key_pub_file = Path(str(self.key_file) + ".pub")
     
     def _check_age_installed(self):
