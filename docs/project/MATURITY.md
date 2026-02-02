@@ -3,7 +3,7 @@ title: Project maturity report
 nav_order: 101
 parent: Project
 redirect_from: 
-  - /nakimi/project/GRADE_REPORT.html
+  - /project/GRADE_REPORT.html
 ---
 
 # Project maturity report
