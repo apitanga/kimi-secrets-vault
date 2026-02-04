@@ -119,23 +119,25 @@ EOF
 ## Step 5: Add Your First Secret
 
 1. Create or edit secrets template:
-```bash
-# Copy template
-cp config/secrets.template.json ~/.nakimi/secrets.json
 
-# Edit with your credentials
-vim ~/.nakimi/secrets.json
-```
+   ```bash
+   # Copy template
+   cp config/secrets.template.json ~/.nakimi/secrets.json
+
+   # Edit with your credentials
+   vim ~/.nakimi/secrets.json
+   ```
 
 2. Encrypt the secrets:
-```bash
-age -r $(cat ~/.nakimi/key.txt.pub) \
-  -o ~/.nakimi/secrets.json.age \
-  ~/.nakimi/secrets.json
 
-# Securely delete plaintext
-shred -u ~/.nakimi/secrets.json
-```
+   ```bash
+   age -r $(cat ~/.nakimi/key.txt.pub) \
+     -o ~/.nakimi/secrets.json.age \
+     ~/.nakimi/secrets.json
+
+   # Securely delete plaintext
+   shred -u ~/.nakimi/secrets.json
+   ```
 
 ## Step 6: Set Up Plugins
 
