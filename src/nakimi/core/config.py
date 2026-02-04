@@ -74,7 +74,7 @@ class VaultConfig:
         self._yubikey_slot = self._get_str(
             "NAKIMI_YUBIKEY_SLOT",
             config_values.get("yubikey_slot"),
-            "9a"
+            "1"
         )
         self._yubikey_require_touch = self._get_bool(
             "NAKIMI_YUBIKEY_REQUIRE_TOUCH",
