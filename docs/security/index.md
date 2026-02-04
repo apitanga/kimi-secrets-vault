@@ -25,7 +25,7 @@ Nakimi uses [age](https://age-encryption.org) (Actually Good Encryption) for mod
 - **Public-key cryptography**: Each vault has a key pair (private/public)
 - **Encryption at rest**: All secrets are encrypted with age before storage
 - **Just-in-time decryption**: Secrets are decrypted only during active sessions
-- **RAM-backed storage**: Decrypted secrets stay in RAM (`/dev/shm`) and never touch disk
+- **RAM-backed storage**: Decrypted secrets prefer `/dev/shm` (RAM-backed tmpfs); falls back to `/tmp` if unavailable
 - **Memory locking**: Uses `mlock()` to prevent swapping to disk
 - **Hardware key support**: Optional [YubiKey](https://www.yubico.com) PIV integration via `age-plugin-yubikey` (requires physical key + PIN)
 - **Secure deletion**: Plaintext files are shredded with `shred` (not just deleted)
@@ -54,7 +54,7 @@ Nakimi uses [age](https://age-encryption.org) (Actually Good Encryption) for mod
 | Accidental file exposure | Secrets are encrypted (`.age` files) |
 | Process memory inspection | Secrets only in RAM during sessions |
 | Swap file exposure | `mlock()` prevents swapping |
-| Temporary file residue | RAM-backed storage, secure deletion |
+| Temporary file residue | RAM-backed storage (best effort), secure deletion |
 | Shoulder surfing | No protection (use screen privacy) |
 
 ### Limitations
@@ -70,10 +70,10 @@ Nakimi uses [age](https://age-encryption.org) (Actually Good Encryption) for mod
 ### How Sessions Work
 
 1. User runs `nakimi session`
-2. Vault decrypts secrets to a temporary file in `/dev/shm` (RAM disk)
+2. Vault decrypts secrets to a temp file — `/dev/shm` (RAM) if available, otherwise `/tmp` (disk)
 3. Environment variables point plugins to the decrypted file
 4. User executes commands within the session
-5. On exit, the temporary file is securely shredded
+5. On exit, the temp file is securely deleted (`shred` if on disk, plain `unlink` if on RAM)
 
 ### Session Isolation
 

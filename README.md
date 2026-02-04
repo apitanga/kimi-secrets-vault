@@ -444,14 +444,18 @@ class CustomPlugin(Plugin):
 
 This tool uses multiple layers of protection for temporary decrypted files:
 
-1. **RAM-backed storage** (`/dev/shm` on Linux) - Secrets never touch physical disk
-2. **Memory locking** (`mlock`) - Prevents RAM from being swapped to disk under memory pressure
+1. **RAM-backed storage** (`/dev/shm` on Linux) - Preferred destination; secrets never touch physical disk when available
+2. **Memory locking** (`mlock`) - Prevents RAM pages from being swapped to disk under memory pressure
 3. **Strict permissions** (`chmod 600`) - Only owner can read
+4. **Secure deletion** (`shred`) - Overwrites before removing; used when files land on physical storage
+
+**Note:** `/dev/shm` is not guaranteed — it requires a tmpfs mount and write access. In environments where it's unavailable (e.g. some containers), decrypted files fall back to `/tmp` on physical disk. In that case, `chmod 600` + `shred` on cleanup are the active protections. `mlock` and `/dev/shm` are best-effort.
 
 This means:
-- ✅ Secrets stay in RAM only (never on SSD/HDD)
-- ✅ Protected from swapping (even under memory pressure)
-- ✅ Automatic cleanup on reboot
+- ✅ Secrets prefer RAM-only storage, but fall back gracefully to disk
+- ✅ Protected from swapping when `mlock` succeeds (best effort)
+- ✅ Secure deletion on physical storage via `shred`
+- ✅ Automatic cleanup on reboot (both `/dev/shm` and `/tmp`)
 
 For systems without RAM disk support or maximum security, we still recommend **Full Disk Encryption** (FileVault on macOS, BitLocker on Windows, or LUKS on Linux).
 

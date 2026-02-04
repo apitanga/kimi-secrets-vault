@@ -101,7 +101,7 @@ Vault shreds temp file (on session end)
 |--------|---------|----------------|
 | Credentials on disk | Encryption (age) | `secrets.json.age` |
 | Key compromise | File permissions | `chmod 600 key.txt` |
-| Temp file leakage | Secure deletion | `shred -u` |
+| Temp file leakage | RAM-backed storage + secure deletion | `/dev/shm` preferred; `shred -u` on disk |
 | Unauthorized access | No remote access | Local-only tool |
 | Session hijacking | Isolated sessions | Unique temp file per session |
 
@@ -172,17 +172,17 @@ src/nakimi/
 ```
 User: nakimi session
         ↓
-Vault.decrypt() → /tmp/secrets-abc123.json
+Vault.decrypt() → /dev/shm/secrets-abc123.json  (or /tmp/ if /dev/shm unavailable)
         ↓
-Shell starts with NAKIMI_SECRETS=/tmp/secrets-abc123.json
+Shell starts with NAKIMI_SECRETS=<decrypted path>
         ↓
 User: nakimi gmail.unread
         ↓
-Plugin reads from /tmp/secrets-abc123.json
+Plugin reads from NAKIMI_SECRETS path
         ↓
 User: exit
         ↓
-Vault.cleanup() → shred /tmp/secrets-abc123.json
+Vault.cleanup() → secure_delete  (shred if on disk, unlink if on RAM)
 ```
 
 ### Command Mode
@@ -190,13 +190,13 @@ Vault.cleanup() → shred /tmp/secrets-abc123.json
 ```
 User: nakimi gmail.unread 5
         ↓
-Vault.decrypt() → /tmp/secrets-xyz789.json
+Vault.decrypt() → /dev/shm/secrets-xyz789.json  (or /tmp/ if /dev/shm unavailable)
         ↓
 Plugin executes command
         ↓
 Output displayed
         ↓
-Vault.cleanup() → shred /tmp/secrets-xyz789.json
+Vault.cleanup() → secure_delete  (shred if on disk, unlink if on RAM)
 ```
 
 ---

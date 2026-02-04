@@ -272,7 +272,7 @@ age -d -i ~/.nakimi/key.txt ~/.nakimi/secrets.json.age | \
 
 - **Scope**: We use `gmail.readonly` + `gmail.compose` - can read and compose emails but cannot delete or modify existing ones
 - **Token storage**: Tokens are encrypted at rest with age, decrypted only during sessions
-- **Session lifetime**: Secrets exist only in `/tmp/` during the session
+- **Session lifetime**: Secrets exist only in a temp file during the session (`/dev/shm` if available, `/tmp` otherwise)
 - **Cleanup**: Automatically shredded when the session ends
 
 ## Next Steps
