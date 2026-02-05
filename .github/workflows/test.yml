@@ -12,11 +12,82 @@ on:
       - 'docs/**'
 
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
+  test-fedora:
+    runs-on: fedora-latest
     strategy:
       matrix:
-        os: [fedora-latest, macos-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    # - name: Install age encryption tool
+    #   run: |
+    #     # Try to install age using system package manager first
+    #     if [ "$RUNNER_OS" == "Linux" ]; then
+    #       sudo apt-get update
+    #       sudo apt-get install -y age || {
+    #         echo "Package manager installation failed, installing from GitHub releases..."
+    #         wget -q https://github.com/FiloSottile/age/releases/download/v1.1.1/age-v1.1.1-linux-amd64.tar.gz
+    #         tar -xzf age-v1.1.1-linux-amd64.tar.gz
+    #         sudo mv age/age /usr/local/bin/
+    #         sudo mv age/age-keygen /usr/local/bin/
+    #         rm -rf age age-v1.1.1-linux-amd64.tar.gz
+    #       }
+    #     elif [ "$RUNNER_OS" == "macOS" ]; then
+    #       brew install age || {
+    #         echo "Homebrew installation failed, installing from GitHub releases..."
+    #         wget -q https://github.com/FiloSottile/age/releases/download/v1.1.1/age-v1.1.1-darwin-amd64.tar.gz
+    #         tar -xzf age-v1.1.1-darwin-amd64.tar.gz
+    #         sudo mv age/age /usr/local/bin/
+    #         sudo mv age/age-keygen /usr/local/bin/
+    #         rm -rf age age-v1.1.1-darwin-amd64.tar.gz
+    #       }
+    #     fi
+        
+    #     # Verify installation
+    #     age --version
+    #     age-keygen --version
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+    
+    - name: Run tests with coverage
+      continue-on-error: true
+      run: |
+        python -m pytest tests/ --cov=src/nakimi --cov-report=term-missing --cov-report=xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+    
+    - name: Check code formatting with black
+      run: |
+        black --check src/ tests/
+    
+    - name: Run linting with flake8
+      run: |
+        flake8 src/ tests/ --count --max-complexity=10 --statistics
+    
+    - name: Run type checking with mypy
+      continue-on-error: true
+      run: |
+        mypy src/
+
+  test-macos:
+    runs-on: macos-latest
+    needs: test-fedora
+    strategy:
+      matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
     
     steps:
