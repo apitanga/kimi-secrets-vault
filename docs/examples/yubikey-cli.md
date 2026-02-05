@@ -72,6 +72,7 @@ export NAKIMI_YUBIKEY_PIN_PROMPT=false
 ## Troubleshooting
 
 ### YubiKey Not Detected
+
 ```bash
 # Check if ykman is installed
 which ykman
@@ -85,6 +86,7 @@ sudo dmesg | grep -i yubikey
 ```
 
 ### PIN Issues
+
 ```bash
 # Verify PIN works
 ykman piv verify-pin 123456
@@ -94,8 +96,9 @@ ykman piv reset
 ```
 
 ### Encryption/Decryption Errors
+
 ```bash
-# Check if age key exists
+# Check if age key exists in Nakimi
 ls -la ~/.nakimi/key.txt
 
 # Test age encryption/decryption without YubiKey
