@@ -1,12 +1,12 @@
 ---
-title: Project
-nav_order: 100
 has_children: true
+nav_order: 100
+title: Project
 ---
 
 # Project
 
-This section contains project management documents, reports, and planning information for Nakimi.
+This section contains project management documents, reports, and planning information for Nakimi
 
 ## Contents
 
