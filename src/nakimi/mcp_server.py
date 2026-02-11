@@ -73,9 +73,7 @@ def create_server(plugin_manager: PluginManager) -> Server:
         return build_tools(plugin_manager)
 
     @server.call_tool()
-    async def call_tool(
-        name: str, arguments: dict[str, Any] | None
-    ) -> list[types.TextContent]:
+    async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[types.TextContent]:
         full_command = command_from_tool_name(name)
         args_dict = arguments or {}
 

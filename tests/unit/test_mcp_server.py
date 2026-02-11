@@ -11,6 +11,7 @@ mcp_server = pytest.importorskip("nakimi.mcp_server")
 
 # --- Test helper ---
 
+
 class SamplePlugin(Plugin):
     """Minimal plugin for testing."""
 
@@ -73,7 +74,9 @@ class TestPluginCommandToInputSchema:
 
     def test_required_arg(self):
         cmd = PluginCommand(
-            "greet", "Greet", lambda n: None,
+            "greet",
+            "Greet",
+            lambda n: None,
             [("name", "Person to greet", True)],
         )
         schema = mcp_server.plugin_command_to_input_schema(cmd)
@@ -85,7 +88,9 @@ class TestPluginCommandToInputSchema:
 
     def test_optional_arg(self):
         cmd = PluginCommand(
-            "list", "List items", lambda l: None,
+            "list",
+            "List items",
+            lambda l: None,
             [("limit", "Max results", False)],
         )
         schema = mcp_server.plugin_command_to_input_schema(cmd)
@@ -94,7 +99,9 @@ class TestPluginCommandToInputSchema:
 
     def test_mixed_args(self):
         cmd = PluginCommand(
-            "search", "Search", lambda q, l: None,
+            "search",
+            "Search",
+            lambda q, l: None,
             [
                 ("query", "Search query", True),
                 ("limit", "Max results", False),
@@ -106,7 +113,9 @@ class TestPluginCommandToInputSchema:
 
     def test_multiple_required(self):
         cmd = PluginCommand(
-            "send", "Send message", lambda t, s, b: None,
+            "send",
+            "Send message",
+            lambda t, s, b: None,
             [
                 ("to", "Recipient", True),
                 ("subject", "Subject", True),
