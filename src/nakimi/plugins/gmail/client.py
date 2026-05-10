@@ -330,6 +330,68 @@ class GmailClient:
         except GmailAuthError:
             return None
 
+    def get_message(self, msg_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch full email body content by message ID"""
+        try:
+            self._ensure_valid_token()
+
+            msg_data = self._execute_with_retry(
+                self.service.users()
+                .messages()
+                .get(userId="me", id=msg_id, format="full")
+                .execute
+            )
+
+            if not msg_data:
+                return None
+
+            headers = {h["name"]: h["value"] for h in msg_data["payload"]["headers"]}
+
+            # Decode body from payload (handles multipart)
+            body_text = self._decode_body(msg_data["payload"])
+
+            return {
+                "id": msg_id,
+                "subject": headers.get("Subject", "No Subject"),
+                "from": headers.get("From", "Unknown"),
+                "date": headers.get("Date", "Unknown"),
+                "to": headers.get("To", ""),
+                "cc": headers.get("Cc", ""),
+                "body": body_text,
+                "label_ids": msg_data.get("labelIds", []),
+            }
+
+        except GmailAuthError:
+            return None
+
+    @staticmethod
+    def _decode_body(payload: Dict[str, Any]) -> str:
+        """Recursively decode email body from payload"""
+        # Single part: body is in payload['body']['data']
+        if payload.get("mimeType") == "text/plain" and payload.get("body", {}).get("data"):
+            try:
+                return base64.urlsafe_b64decode(payload["body"]["data"]).decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
+        # Multipart: iterate over parts looking for text/plain
+        if payload.get("parts"):
+            texts = []
+            for part in payload["parts"]:
+                part_text = GmailClient._decode_body(part)
+                if part_text:
+                    texts.append(part_text)
+            return "\n".join(texts)
+
+        # Try body.data directly (some single-part messages)
+        if payload.get("body", {}).get("data"):
+            try:
+                return base64.urlsafe_b64decode(payload["body"]["data"]).decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
+        return ""
+
     def create_draft(self, to: str, subject: str, body: str) -> Optional[Dict[str, Any]]:
         """Create an email draft"""
         try:

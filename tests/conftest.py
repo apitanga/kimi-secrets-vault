@@ -125,6 +125,16 @@ def mock_gmail_client():
         "messagesTotal": 100,
         "threadsTotal": 50,
     }
+    mock.get_message.return_value = {
+        "id": "msg-full-001",
+        "subject": "Full Email",
+        "from": "sender@example.com",
+        "date": "2026-01-01T12:00:00Z",
+        "to": "test@example.com",
+        "cc": "",
+        "body": "Hello, this is the full email body text.",
+        "label_ids": ["INBOX"],
+    }
     mock.create_draft.return_value = {"id": "draft123"}
     mock.send.return_value = {"id": "msg123"}
 

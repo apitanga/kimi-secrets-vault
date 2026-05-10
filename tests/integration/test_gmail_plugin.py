@@ -40,6 +40,7 @@ class TestGmailPlugin:
         assert "search" in command_names
         assert "labels" in command_names
         assert "profile" in command_names
+        assert "message" in command_names
         assert "send" in command_names
         assert "draft" in command_names
 
@@ -50,6 +51,7 @@ class TestGmailPlugin:
             ("recent", ["3"], "1 recent email(s):"),
             ("inbox", ["2"], "1 email(s) in Inbox:"),
             ("search", ["test", "5"], "1 result(s) for 'test':"),
+            ("message", ["msg-full-001"], "Subject: Full Email"),
             ("labels", [], "label(s)"),
             ("profile", [], "Gmail Profile"),
         ],
@@ -99,6 +101,15 @@ class TestGmailPlugin:
 
         result = cmd_dict["send"]("", "", "")
         assert "Error: to, subject, and body are required" in result
+
+    def test_gmail_plugin_message_missing_id(self, mock_secrets):
+        """Test message command with missing message ID."""
+        plugin = GmailPlugin(mock_secrets["gmail"])
+        commands = plugin.get_commands()
+        cmd_dict = {cmd.name: cmd.handler for cmd in commands}
+
+        result = cmd_dict["message"]("")
+        assert "Error: Message ID is required" in result
 
     def test_gmail_plugin_search_missing_query(self, mock_secrets):
         """Test search command with missing query."""

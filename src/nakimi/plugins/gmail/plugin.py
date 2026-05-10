@@ -79,6 +79,12 @@ class GmailPlugin(Plugin):
                 name="profile", description="Show Gmail profile", handler=self.cmd_profile, args=[]
             ),
             PluginCommand(
+                name="message",
+                description="Fetch full email body by message ID",
+                handler=self.cmd_message,
+                args=[("msg_id", "Message ID to fetch", True)],
+            ),
+            PluginCommand(
                 name="draft",
                 description="Create an email draft",
                 handler=self.cmd_draft,
@@ -217,6 +223,31 @@ class GmailPlugin(Plugin):
         lines.append("")
         for label in labels:
             lines.append(f"  - {label['name']}")
+
+        return "\n".join(lines)
+
+    def cmd_message(self, msg_id: str = "") -> str:
+        """Fetch full email body by message ID"""
+        if not msg_id:
+            return "Error: Message ID is required"
+
+        client = self._get_client()
+        msg = client.get_message(msg_id)
+
+        if not msg:
+            return f"Could not fetch message {msg_id}."
+
+        lines = [
+            f"Subject: {msg['subject']}",
+            f"From: {msg['from']}",
+            f"Date: {msg['date']}",
+            f"To: {msg['to']}",
+        ]
+        if msg.get("cc"):
+            lines.append(f"Cc: {msg['cc']}")
+        lines.append("")
+        lines.append("--- Body ---")
+        lines.append(msg["body"])
 
         return "\n".join(lines)
 
